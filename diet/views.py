@@ -1,6 +1,10 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
 import json
+
+def home(request):
+    return HttpResponse("AI Diet Planner Backend is Running 🚀")
 
 @csrf_exempt
 def ai_diet(request):

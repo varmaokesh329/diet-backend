@@ -45,7 +45,7 @@ Requirements:
 - Keep response short and clean
 """
 
-            API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
+            API_URL = "https://router.huggingface.co/hf-inference/models/google/flan-t5-small"
 
             headers = {
                 "Authorization": f"Bearer {HF_TOKEN}"

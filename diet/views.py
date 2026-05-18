@@ -29,33 +29,36 @@ def ai_diet(request):
             prompt = f"""
 Create a personalized Indian diet plan.
 
-User Details:
 Weight: {weight} kg
 Height: {height} cm
 Age: {age}
 Goal: {goal}
 Preferred Foods: {foods}
 
-Requirements:
-- Calculate calories
-- Show protein, carbs, fiber
-- Breakfast, Lunch, Dinner, Snacks
-- Show grams/pieces
-- Avoid rice in breakfast/snacks
-- Keep response short and clean
+Show:
+- Calories
+- Protein
+- Carbs
+- Fiber
+- Breakfast
+- Lunch
+- Dinner
+- Snacks
+
+Include grams/pieces.
+Avoid rice in breakfast and snacks.
 """
 
-            API_URL = "https://router.huggingface.co/hf-inference/models/google/flan-t5-small"
+            API_URL = "https://router.huggingface.co/hf-inference/models/gpt2"
 
             headers = {
                 "Authorization": f"Bearer {HF_TOKEN}"
             }
 
             payload = {
-                "inputs": prompt[:1000],
+                "inputs": prompt[:500],
                 "parameters": {
-                    "max_new_tokens": 250,
-                    "temperature": 0.7
+                    "max_new_tokens": 150
                 }
             }
 
@@ -67,6 +70,7 @@ Requirements:
             )
 
             if response.status_code != 200:
+
                 return JsonResponse({
                     "diet": f"AI Error: {response.text}"
                 })

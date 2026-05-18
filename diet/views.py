@@ -27,38 +27,38 @@ def ai_diet(request):
             foods = data.get("foods")
 
             prompt = f"""
-Create a personalized Indian diet plan.
+Create a simple Indian diet plan.
 
 Weight: {weight} kg
 Height: {height} cm
 Age: {age}
 Goal: {goal}
-Preferred Foods: {foods}
+Foods: {foods}
 
 Show:
-- Calories
-- Protein
-- Carbs
-- Fiber
-- Breakfast
-- Lunch
-- Dinner
-- Snacks
+Calories
+Protein
+Carbs
+Fiber
+Breakfast
+Lunch
+Dinner
+Snacks
 
-Include grams/pieces.
-Avoid rice in breakfast and snacks.
+Include grams and pieces.
+Avoid rice in breakfast/snacks.
 """
 
-            API_URL = "https://router.huggingface.co/hf-inference/models/gpt2"
+            API_URL = "https://api-inference.huggingface.co/models/distilgpt2"
 
             headers = {
                 "Authorization": f"Bearer {HF_TOKEN}"
             }
 
             payload = {
-                "inputs": prompt[:500],
+                "inputs": prompt,
                 "parameters": {
-                    "max_new_tokens": 150
+                    "max_new_tokens": 120
                 }
             }
 
@@ -68,12 +68,6 @@ Avoid rice in breakfast and snacks.
                 json=payload,
                 timeout=30
             )
-
-            if response.status_code != 200:
-
-                return JsonResponse({
-                    "diet": f"AI Error: {response.text}"
-                })
 
             result = response.json()
 
@@ -93,7 +87,7 @@ Avoid rice in breakfast and snacks.
             elif "error" in result:
 
                 return JsonResponse({
-                    "diet": f"AI Loading/Error: {result['error']}"
+                    "diet": f"AI Error: {result['error']}"
                 })
 
             else:

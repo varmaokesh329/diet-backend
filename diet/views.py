@@ -27,86 +27,79 @@ def ai_diet(request):
             foods = data.get("foods")
 
             prompt = f"""
-You are an expert AI nutritionist.
-
 Create a personalized Indian diet plan.
 
 User Details:
-- Weight: {weight} kg
-- Height: {height} cm
-- Age: {age}
-- Goal: {goal}
-- Preferred Foods: {foods}
+Weight: {weight} kg
+Height: {height} cm
+Age: {age}
+Goal: {goal}
+Preferred Foods: {foods}
 
 Requirements:
-1. Calculate total daily calories accurately.
-2. Show protein, carbs, and fiber targets in grams.
-3. Create Breakfast, Lunch, Dinner, and Snacks.
-4. Show exact quantity of each food item in grams or pieces.
-5. Avoid rice in breakfast and snacks.
-6. Use only preferred foods where possible.
-7. Keep the plan realistic and healthy.
-8. Format the response clearly.
-
-Example Format:
-
-Goal: Weight Loss
-
-Calories Needed: 1900 kcal
-
-Protein: 120g
-Carbs: 220g
-Fiber: 30g
-
-Breakfast:
-- Oats - 60g
-- Banana - 1 piece
-
-Lunch:
-- Rice - 150g
-- Chicken - 120g
-
-Dinner:
-- Chapati - 2
-- Paneer - 100g
-
-Snacks:
-- Nuts - 20g
+- Calculate calories
+- Show protein, carbs, fiber
+- Breakfast, Lunch, Dinner, Snacks
+- Show grams/pieces
+- Avoid rice in breakfast/snacks
+- Keep response short and clean
 """
 
+            API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-small"
+
+            headers = {
+                "Authorization": f"Bearer {HF_TOKEN}"
+            }
+
+            payload = {
+                "inputs": prompt[:1000],
+                "parameters": {
+                    "max_new_tokens": 250,
+                    "temperature": 0.7
+                }
+            }
+
             response = requests.post(
-                "https://api-inference.huggingface.co/models/google/flan-t5-small",
-                headers={
-                    "Authorization": f"Bearer {HF_TOKEN}"
-                },
-                json={
-                    "inputs": prompt
-                },
-                timeout=120
+                API_URL,
+                headers=headers,
+                json=payload,
+                timeout=30
             )
+
+            if response.status_code != 200:
+                return JsonResponse({
+                    "diet": f"AI Error: {response.text}"
+                })
 
             result = response.json()
 
             print(result)
 
             if isinstance(result, list):
-                generated_text = result[0]["generated_text"]
+
+                generated_text = result[0].get(
+                    "generated_text",
+                    "No response generated."
+                )
 
                 return JsonResponse({
                     "diet": generated_text
                 })
 
             elif "error" in result:
+
                 return JsonResponse({
                     "diet": f"AI Loading/Error: {result['error']}"
                 })
 
             else:
+
                 return JsonResponse({
                     "diet": "Unexpected AI response."
                 })
 
         except Exception as e:
+
             return JsonResponse({
                 "error": str(e)
             }, status=500)

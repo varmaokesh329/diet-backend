@@ -1,11 +1,15 @@
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
-import requests
 import os
+import google.generativeai as genai
 
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+genai.configure(api_key=GEMINI_API_KEY)
+
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 
 def home(request):
@@ -18,6 +22,7 @@ def ai_diet(request):
     if request.method == "POST":
 
         try:
+
             data = json.loads(request.body)
 
             weight = data.get("weight")
@@ -27,74 +32,59 @@ def ai_diet(request):
             foods = data.get("foods")
 
             prompt = f"""
-Create a simple Indian diet plan.
+You are an expert AI nutritionist.
 
-Weight: {weight} kg
-Height: {height} cm
-Age: {age}
-Goal: {goal}
-Foods: {foods}
+Create a personalized Indian diet plan.
 
-Show:
-Calories
-Protein
-Carbs
-Fiber
-Breakfast
-Lunch
-Dinner
-Snacks
+USER DETAILS:
+- Weight: {weight} kg
+- Height: {height} cm
+- Age: {age}
+- Goal: {goal}
+- Preferred Foods: {foods}
 
-Include grams and pieces.
-Avoid rice in breakfast/snacks.
+IMPORTANT RULES:
+1. Calculate accurate calories.
+2. Show protein, carbs, and fiber in grams.
+3. Show exact quantity of each food item.
+4. Use grams or pieces.
+5. Avoid rice in breakfast and snacks.
+6. Use only selected foods where possible.
+7. Keep meals realistic and healthy.
+8. Give Breakfast, Lunch, Dinner, and Snacks.
+9. Format clearly.
+
+Example format:
+
+Goal: Weight Loss
+
+Calories Needed: 1900 kcal
+
+Protein: 120g
+Carbs: 220g
+Fiber: 30g
+
+Breakfast:
+- Oats - 60g
+- Banana - 1 piece
+
+Lunch:
+- Rice - 150g
+- Chicken - 120g
+
+Dinner:
+- Chapati - 2
+- Paneer - 100g
+
+Snacks:
+- Nuts - 20g
 """
 
-            API_URL = "https://api-inference.huggingface.co/models/distilgpt2"
+            response = model.generate_content(prompt)
 
-            headers = {
-                "Authorization": f"Bearer {HF_TOKEN}"
-            }
-
-            payload = {
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": 120
-                }
-            }
-
-            response = requests.post(
-                API_URL,
-                headers=headers,
-                json=payload,
-                timeout=30
-            )
-
-            result = response.json()
-
-            print(result)
-
-            if isinstance(result, list):
-
-                generated_text = result[0].get(
-                    "generated_text",
-                    "No response generated."
-                )
-
-                return JsonResponse({
-                    "diet": generated_text
-                })
-
-            elif "error" in result:
-
-                return JsonResponse({
-                    "diet": f"AI Error: {result['error']}"
-                })
-
-            else:
-
-                return JsonResponse({
-                    "diet": "Unexpected AI response."
-                })
+            return JsonResponse({
+                "diet": response.text
+            })
 
         except Exception as e:
 
